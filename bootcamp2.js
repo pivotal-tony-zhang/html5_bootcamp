@@ -1,7 +1,7 @@
 //Retrieves the API Url with the appropriate offset and articleLimit
 function getApiUrl(articleLimit, offset) {
 	if (articleLimit === undefined || articleLimit === null || articleLimit <= 0) {
-		articleLimit = 10;
+		articleLimit = getArticleLimit();
 	}
 	if (offset === undefined || offset === null || offset < 0) {
 		offset = 0;
@@ -9,9 +9,10 @@ function getApiUrl(articleLimit, offset) {
 	return "http://api.espn.com/v1/sports/news/?limit=" + articleLimit + "&offset=" + offset + "&apikey=8pa4vr4uquavzwq2ffm7w5cx";
 }
 
+
+
 //Creates a div that coresponds to the article story with all its related features
 function makeArticle(article, i, appendAfter, showImage) {
-
     //Create Necessary Article Divs
     var storyDiv = document.createElement('div'),
 		imageTag = document.createElement('img'),
@@ -19,9 +20,10 @@ function makeArticle(article, i, appendAfter, showImage) {
 		descriptionDiv = document.createElement('div'),
 		lastModifiedDiv = document.createElement('div'),
 		readMoreLink = document.createElement('a');
-
+	
+	
     //Apply necessary ids and classes
-    storyDiv.id = 'story' + i + 'Content';
+    storyDiv.id = 'article' + i;
     storyDiv.className = 'story';
 
     imageTag.id = 'image' + i;
@@ -39,6 +41,22 @@ function makeArticle(article, i, appendAfter, showImage) {
     readMoreLink.id = 'link' + i;
     readMoreLink.className = 'readMore';
 
+	storyDiv.onclick = function(){
+		if(this.style.height!=='30px'){
+			this.querySelector('.image').style.display = 'none';
+			this.querySelector('.lastModified').style.display = 'none';
+			this.querySelector('.readMore').style.display = 'none';
+			this.querySelector('.description').style.display = 'none';
+			$(this).animate({height:'30px'},"slow");
+		}else{
+			this.querySelector('.image').style.display = 'block';
+			this.querySelector('.lastModified').style.display = 'block';
+			this.querySelector('.readMore').style.display = 'block';
+			this.querySelector('.description').style.display = 'block';
+			$(this).animate({height:'230px'},"slow");
+		}
+	};
+	
     //Append headline, description, lastModified and image to the article
     storyDiv.appendChild(imageTag);
     storyDiv.appendChild(headlineDiv);
@@ -60,7 +78,11 @@ function makeArticle(article, i, appendAfter, showImage) {
     } else {
         imageTag.src = "img/espn_logo.jpg";
     }
-
+	
+	imageTag.onload = function(){
+		this.style.paddingTop = (210-this.height)/2 + 'px';
+	}
+	
     if (article.headline !== undefined) {
         headlineDiv.innerHTML = article.headline;
     } else {
@@ -91,12 +113,12 @@ function makeArticle(article, i, appendAfter, showImage) {
     } else {
         readMoreLink.innerHTML = "No Links Avaliable.";
     }
-    return storyDiv;
 }
 
 //Offline Response Function - displays stories stored in offline storage, and will display an error message if it does not find any
 function offlineResponse() {
-	var articles = amplify.store("articles");
+	// var articles = amplify.store("articles");
+	var articles = JSON.parse(localStorage.articles);
 	if (articles !== undefined && articles !== null) {
 		for (var i = 0; i < articles.length; i++) {
 			makeArticle(articles[i],i,true,false);
@@ -108,16 +130,16 @@ function offlineResponse() {
 
 //Response Function - stores the JSON for offline access and displays related stories when window is first loaded
 function onlineResponse(articleData, articleArray, articleLimit) {
-	amplify.store("articles",articleData);
+	// amplify.store("articles",articleData);
+	localStorage.articles = JSON.stringify(articleData);
 	for (var i = 0; i < articleLimit; i++) {
-		articleArray[i] = articleData[articleArray.length - i - 1];
+		articleArray.push(articleData[articleLimit - i - 1]);
 		makeArticle(articleArray[i], i, true, true);
 	}
 }
 
 //Update Function - updates and displays any new stories
 function onlineUpdate(articleData, articleArray, articleLimit) {
-	console.log(articleData[0].headline);
 	var i = 0;
 	while (i < articleLimit && articleData[i].id !== articleArray[articleArray.length - 1].id) {
 		i++;
@@ -136,13 +158,12 @@ function makeRequest(inputUrl, updateFlag, articleArray, articleLimit, requestDa
 		timeout : 5000
 	});
 	req.success(function(data){
-		console.log("here");
 		if (updateFlag) {
 			onlineUpdate(data.headlines, articleArray, articleLimit, true);
 		} else {
 			onlineResponse(data.headlines, articleArray, articleLimit, true);
 			setInterval(function () {
-				makeRequest("http://www.skoushan.com/articles.json", true, articleArray, articleLimit, "json");
+				makeRequest(getApiUrl, true, articleArray, articleLimit, "json");
 			}, 5000);
 		}
 	});
@@ -158,13 +179,15 @@ function makeRequest(inputUrl, updateFlag, articleArray, articleLimit, requestDa
 //Initial Load Function - called when window is first loaded. Initial variables are set, and makeRequest function is called.
 function initialLoad() 
 {
-	var articleLimit = 10;
-	var articleArray = new Array(articleLimit);
 	if(navigator.onLine){
-		makeRequest(getApiUrl(), false, articleArray, articleLimit, "jsonp");
+		makeRequest(getApiUrl(), false, [], getArticleLimit(), "jsonp");
 	}else{
 		offlineResponse();
 	}
+}
+
+function getArticleLimit(){
+	return 20;
 }
 
 window.onload = initialLoad();
