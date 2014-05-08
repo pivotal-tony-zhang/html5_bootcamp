@@ -42,17 +42,22 @@ function makeArticle(article, i, appendAfter, showImage) {
     readMoreLink.className = 'readMore';
 
 	storyDiv.onclick = function(){
-		if(this.style.height!=='30px'){
+		if(this.style.height!=='27px'){
 			this.querySelector('.image').style.display = 'none';
 			this.querySelector('.lastModified').style.display = 'none';
 			this.querySelector('.readMore').style.display = 'none';
 			this.querySelector('.description').style.display = 'none';
-			$(this).animate({height:'30px'},"slow");
+			this.fullHTML = this.querySelector('.headline').innerHTML;
+			if(screen.width <= 760 && this.fullHTML.length > 40){
+				this.querySelector('.headline').innerHTML = this.fullHTML.substring(0, this.fullHTML.substring(0,40).lastIndexOf(" ")) + '...';
+			}
+			$(this).animate({height:'27px'},"slow");
 		}else{
 			this.querySelector('.image').style.display = 'block';
 			this.querySelector('.lastModified').style.display = 'block';
 			this.querySelector('.readMore').style.display = 'block';
 			this.querySelector('.description').style.display = 'block';
+			this.querySelector('.headline').innerHTML = this.fullHTML;
 			$(this).animate({height:'230px'},"slow");
 		}
 	};
