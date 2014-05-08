@@ -122,7 +122,6 @@ function makeArticle(article, i, appendAfter, showImage) {
 
 //Offline Response Function - displays stories stored in offline storage, and will display an error message if it does not find any
 function offlineResponse() {
-	// var articles = amplify.store("articles");
 	var articles = JSON.parse(localStorage.articles);
 	if (articles !== undefined && articles !== null) {
 		for (var i = 0; i < articles.length; i++) {
@@ -135,11 +134,10 @@ function offlineResponse() {
 
 //Response Function - stores the JSON for offline access and displays related stories when window is first loaded
 function onlineResponse(articleData, articleArray, articleLimit) {
-	// amplify.store("articles",articleData);
 	localStorage.articles = JSON.stringify(articleData);
-	for (var i = 0; i < articleLimit; i++) {
-		articleArray.push(articleData[articleLimit - i - 1]);
-		makeArticle(articleArray[i], i, true, true);
+	for (var i = articleLimit-1; i >= 0; i--) {
+		articleArray.push(articleData[i]);
+		makeArticle(articleData[articleLimit-1-i], i, true, true);
 	}
 }
 
@@ -169,7 +167,7 @@ function makeRequest(inputUrl, updateFlag, articleArray, articleLimit, requestDa
 			onlineResponse(data.headlines, articleArray, articleLimit, true);
 			setInterval(function () {
 				makeRequest(getApiUrl(), true, articleArray, articleLimit, "json");
-			}, 5000);
+			}, 30000);/**Test link: "http://skoushan.com/articles.json"**/
 		}
 	});
 
@@ -192,7 +190,7 @@ function initialLoad()
 }
 
 function getArticleLimit(){
-	return 20;
+	return 10;
 }
 
 window.onload = initialLoad();
