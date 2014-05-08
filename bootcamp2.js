@@ -163,7 +163,7 @@ function makeRequest(inputUrl, updateFlag, articleArray, articleLimit, requestDa
 		} else {
 			onlineResponse(data.headlines, articleArray, articleLimit, true);
 			setInterval(function () {
-				makeRequest(getApiUrl, true, articleArray, articleLimit, "json");
+				makeRequest(getApiUrl(), true, articleArray, articleLimit, "json");
 			}, 5000);
 		}
 	});
