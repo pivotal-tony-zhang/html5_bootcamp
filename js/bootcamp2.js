@@ -12,7 +12,7 @@ function getApiUrl(articleLimit, offset) {
 
 
 //Creates a div that coresponds to the article story with all its related features
-function makeArticle(article, i, appendAfter, showImage) {
+function makeArticle(article, i, showImage) {
     //Create Necessary Article Divs
     var storyDiv = document.createElement('div'),
 		imageTag = document.createElement('img'),
@@ -69,14 +69,6 @@ function makeArticle(article, i, appendAfter, showImage) {
     storyDiv.appendChild(lastModifiedDiv);
     storyDiv.appendChild(readMoreLink);
 
-    //Append Article to Body
-    if (appendAfter) {
-        document.getElementById('body').appendChild(storyDiv);
-    } else {
-        storyDiv.className = 'newStory';
-        document.getElementById('body').insertBefore(storyDiv, document.getElementById('body').firstChild);
-    }
-
     //Error checks to ensure headline, description, lastModified and image actually exist, and displays appropriate messages / images if they do not
     if (showImage && (article.images !== undefined) && (article.images.length > 0)) {
         imageTag.src = article.images[0].url;
@@ -108,6 +100,7 @@ function makeArticle(article, i, appendAfter, showImage) {
 
     if (article.links !== undefined) {
         readMoreLink.innerHTML = "Read more";
+		//Note: mobile auto-redirects to web and vice-versa if on corresponding devices, so it's fine to set default as web
         if (article.links.web !== undefined) {
             readMoreLink.href = article.links.web.href;
         } else if (article.links.mobile !== undefined) {
@@ -118,6 +111,7 @@ function makeArticle(article, i, appendAfter, showImage) {
     } else {
         readMoreLink.innerHTML = "No Links Avaliable.";
     }
+	return storyDiv;
 }
 
 //Offline Response Function - displays stories stored in offline storage, and will display an error message if it does not find any
@@ -125,7 +119,8 @@ function offlineResponse() {
 	var articles = JSON.parse(localStorage.articles);
 	if (articles !== undefined && articles !== null) {
 		for (var i = 0; i < articles.length; i++) {
-			makeArticle(articles[i],i,true,false);
+			var offlineDiv = makeArticle(articles[i],i,false);
+			document.getElementById('body').appendChild(offlineDiv);
 		}
 	} else {
 		alert("No articles found!");
@@ -137,7 +132,8 @@ function onlineResponse(articleData, articleArray, articleLimit) {
 	localStorage.articles = JSON.stringify(articleData);
 	for (var i = articleLimit-1; i >= 0; i--) {
 		articleArray.push(articleData[i]);
-		makeArticle(articleData[articleLimit-1-i], i, true, true);
+		var newDiv = makeArticle(articleData[articleLimit-1-i], i, true);
+		document.getElementById('body').appendChild(newDiv);
 	}
 }
 
@@ -149,7 +145,9 @@ function onlineUpdate(articleData, articleArray, articleLimit) {
 	}
 	for (var c = i - 1; c >= 0; c--) {
 		articleArray.push(articleData[c]);
-		makeArticle(articleData[c], articleArray.length - 1, false, true);
+		var updatedDiv = makeArticle(articleData[c], articleArray.length - 1, true);
+        updatedDiv.className = 'newStory';
+        document.getElementById('body').insertBefore(updatedDiv, document.getElementById('body').firstChild);
 	}
 }
 
@@ -192,5 +190,3 @@ function initialLoad()
 function getArticleLimit(){
 	return 10;
 }
-
-window.onload = initialLoad();
